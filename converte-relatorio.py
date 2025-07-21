@@ -319,31 +319,3 @@ else:
 
     wb_base.save(caminho_base)
     print(f"[OK] Dados do relatório novo colados no arquivo base, mantendo formatação e cabeçalho.")
-
-    # Copia dados do novo arquivo a partir da linha 3 (pulando cabeçalho)
-    for i, row in enumerate(ws_novo.iter_rows(min_row=3), start=linha_destino):
-        for col_idx, celula_nova in enumerate(row, start=1):
-            valor = celula_nova.value
-            # Convertendo número de data para datetime se necessário
-            if col_idx in colunas_datas and isinstance(valor, (int, float)):
-                try:
-                    valor = from_excel(valor)
-                except:
-                    pass
-
-            celula_base = ws_base.cell(row=i, column=col_idx)
-            celula_base.value = valor
-
-            # Força formato de data nas colunas
-            if col_idx in colunas_datas:
-                celula_base.number_format = "DD/MM/YYYY"
-
-            celula_modelo = ws_base.cell(row=linha_modelo, column=col_idx)
-            copiar_estilo(celula_modelo, celula_base)
-
-        # Ajustar altura da linha igual à linha modelo, ou 15 se modelo não definir altura
-        altura_modelo = ws_base.row_dimensions[linha_modelo].height
-        ws_base.row_dimensions[i].height = altura_modelo if altura_modelo else altura_linha_fina
-
-    wb_base.save(caminho_base)
-    print(f"[OK] Dados do relatório novo colados no arquivo base, mantendo formatação e cabeçalho.")
