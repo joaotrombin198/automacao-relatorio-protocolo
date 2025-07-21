@@ -1,13 +1,15 @@
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from datetime import datetime, timedelta
-from datetime import datetime, timedelta
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
 import unicodedata
 import traceback
 import re
@@ -15,7 +17,6 @@ import subprocess
 from datetime import datetime
 import threading
 import time
-import os
 import sys
 
 def main():
@@ -144,13 +145,16 @@ def main():
         def click_js(driver, element):
             driver.execute_script("arguments[0].click();", element)
 
-        # Configurações do navegador
-        chromedriver_path = 'chromedriver.exe'
         options = webdriver.ChromeOptions()
         options.add_argument("--start-maximized")
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument('--no-sandbox')
+        options.add_argument('--disable-dev-shm-usage')
 
         print("[INFO] Iniciando navegador e acessando o site...")
-        driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         wait = WebDriverWait(driver, 20)
         actions = ActionChains(driver)
 
