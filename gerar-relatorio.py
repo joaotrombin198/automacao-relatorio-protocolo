@@ -96,7 +96,7 @@ def main():
         campos_permitidos = list(aliases.keys())
 
         # Calcula a data de ontem no formato esperado (ex: 16/07/2025)
-        ontem = (datetime.now() - timedelta(days=3)).strftime('%d/%m/%Y')
+        ontem = (datetime.now() - timedelta(days=1)).strftime('%d/%m/%Y')
 
 
         def js_get_text(driver, xpath):
@@ -389,7 +389,7 @@ def main():
         #PREENCHE NOME DO RELATORIO
         print("[INFO] Preenchendo nome do relatório...")
         campo_nome = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[2]/div[1]/div[2]/section/div[1]/div/div/p/input')))
-        data_ontem_para_nome = (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d')
+        data_ontem_para_nome = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
         nome_relatorio = f"Relatorio-{data_ontem_para_nome}"
 
         campo_nome.clear()
