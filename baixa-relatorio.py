@@ -2,16 +2,24 @@ import time
 
 while True:
     try:
-
         from selenium import webdriver
         from selenium.webdriver.common.by import By
         from selenium.webdriver.common.action_chains import ActionChains
         from selenium.webdriver.support.ui import WebDriverWait
         from selenium.webdriver.support import expected_conditions as EC
-        import time
+        from selenium.webdriver.chrome.service import Service
+        from webdriver_manager.chrome import ChromeDriverManager
         import subprocess
 
-        driver = webdriver.Chrome()
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless=new")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+
+        print("[INFO] Iniciando navegador e acessando o site...")
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
         wait = WebDriverWait(driver, 30)
         actions = ActionChains(driver)
 
@@ -23,7 +31,7 @@ while True:
         wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"))).send_keys("joao.trombin@criciuma.unimedsc.com.br")
         wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"))).send_keys("C@mpinh02134")
         time.sleep(1)
-        #wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"))).click()
+        wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"))).click()
 
         # PÁGINA PRINCIPAL
         print("[INFO] Entrando no sistema...")
@@ -64,7 +72,6 @@ while True:
             except Exception as e:
                 print(f"[ERRO] Tentativa {tentativas+1} ao ler status: {e}")
 
-            # Tenta forçar o refresh da tabela recarregando a página de relatórios
             print("[INFO] Atualizando tabela de relatórios...")
             driver.refresh()
             wait.until(EC.presence_of_element_located((By.XPATH, tabela_xpath)))
@@ -87,12 +94,12 @@ while True:
         except Exception as e:
             print(f"[ERRO] Não conseguiu clicar para baixar: {e}")
 
-        # ESPERA FINAL
         time.sleep(10)
         driver.quit()
 
         subprocess.run(["python", "converte-relatorio.py"])
         break  # Sai do loop se tudo rodou sem erro
+
     except Exception as e:
         print(f"[ERRO GERAL] Ocorreu um erro: {e}")
         print("[INFO] Tentando novamente em 30 segundos...")
