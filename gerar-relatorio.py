@@ -22,33 +22,6 @@ import sys
 def main():
     driver = None
     try:
-
-        inicio_execucao = time.time()
-        stop_event = threading.Event()
-
-        def mostrar_tempo():
-            while not stop_event.is_set():
-                tempo_atual = time.time() - inicio_execucao
-                tempo_formatado = time.strftime('%H:%M:%S', time.gmtime(tempo_atual))
-
-                # Salva posição do cursor
-                sys.stdout.write("\0337")
-                # Move para topo da tela (linha 1, coluna 1)
-                sys.stdout.write("\033[1;1H")
-                # Limpa a linha
-                sys.stdout.write("\033[K")
-                # Escreve o tempo fixo no topo
-                sys.stdout.write(f"🕒 Tempo de execução: {tempo_formatado}\n")
-                # Restaura posição do cursor
-                sys.stdout.write("\0338")
-                sys.stdout.flush()
-
-        # Inicia thread que mostra o tempo fixo no topo
-        thread_tempo = threading.Thread(target=mostrar_tempo, daemon=True)
-        thread_tempo.start()
-
-
-
         #Função para normalizar texto
         def normaliza_texto(texto):
             texto = texto.lower()
@@ -403,8 +376,6 @@ def main():
         time.sleep(0.6)
 
         print("[SUCESSO] A automação foi realizada com sucesso!")
-        stop_event.set()
-        thread_tempo.join()
         driver.quit()
 
         try:
