@@ -10,14 +10,19 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
+from dotenv import load_dotenv
+import os
 import unicodedata
 import traceback
 import re
 import subprocess
 from datetime import datetime
-import threading
 import time
-import sys
+
+load_dotenv()
+usuario = os.getenv("USUARIO_SGUSUITE")
+senha = os.getenv("SENHA_SGUSUITE")
+
 
 def main():
     driver = None
@@ -131,15 +136,45 @@ def main():
         wait = WebDriverWait(driver, 20)
         actions = ActionChains(driver)
 
-        driver.get("https://sgusuite-hml.sgusuite.com.br/login")
+        url_login = "https://sgusuite-prd.sgusuite.com.br/login"
+        driver.get(url_login)
         time.sleep(2)
 
-        #LOGIN
+        # Verifica se a tela de login carregou corretamente
+        xpath_email = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"
+        tentativas = 10
+        login_pronto = False
+
+        for tentativa in range(1, tentativas + 1):
+            try:
+                print(f"[INFO] Verificando se a tela de login carregou corretamente... (Tentativa {tentativa})")
+                wait.until(EC.presence_of_element_located((By.XPATH, xpath_email)))
+                print("[INFO] Tela de login carregada com sucesso.")
+                login_pronto = True
+                break
+            except TimeoutException:
+                print(f"[AVISO] Tela de login não carregou. Dando F5 para tentar novamente... (Tentativa {tentativa})")
+                driver.refresh()
+                time.sleep(2)
+
+        if not login_pronto:
+            print("[ERRO] A tela de login não carregou corretamente após várias tentativas.")
+            raise TimeoutException("Tela de login não carregada")
+
+        # LOGIN
         print("[INFO] Fazendo login...")
-        wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"))).send_keys("joao.trombin@criciuma.unimedsc.com.br")
-        wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"))).send_keys("C@mpinh02134")
+
+        # XPATHs
+        xpath_email = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"
+        xpath_senha = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"
+        xpath_botao = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"
+
+        # Entra com os dados do .env
+        wait.until(EC.presence_of_element_located((By.XPATH, xpath_email))).send_keys(usuario)
+        wait.until(EC.presence_of_element_located((By.XPATH, xpath_senha))).send_keys(senha)
         time.sleep(1)
-        wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"))).click()
+        wait.until(EC.element_to_be_clickable((By.XPATH, xpath_botao))).click()
+
 
         #PÁGINA PRINCIPAL
         print("[INFO] Entrando no sistema...")
@@ -148,25 +183,45 @@ def main():
 
         #MENU RELATÓRIO
         print("[INFO] Acessando menu de relatórios...")
-        menu_principal = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[4]/div/div[1]/a/div")))
+        menu_principal = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[3]/div/div[1]/a/div")))
         actions.move_to_element(menu_principal).perform()
         time.sleep(2)
 
-        subitem_protocolo = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[4]/div/div[2]/div/a[1]/div/div/div/div/div[1]/div")))
+        subitem_protocolo = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[3]/div/div[2]/div/a[1]/div/div/div/div/div[1]/div")))
         subitem_protocolo.click()
         time.sleep(2)
 
         print("[INFO] Esperando tela de protocolos carregar...")
         wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[1]/nav')))
 
-        #Clica no campo solicitado ao entrar na tela de protocolos
         print("[INFO] Clicando no campo inicial da tela de protocolos...")
-        elemento_para_clicar = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[1]/nav/div[2]/div/div/div/div/div[1]/p/label/span[1]')))
-        elemento_para_clicar.click()
-        time.sleep(1)
 
-        print("[INFO] Fechando menu lateral...")
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body"))).click()
+        xpath_elemento = '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[1]/nav/div[2]/div/div/div/div/div[1]/p/label/span[1]'
+        tentativas = 10
+        sucesso = False
+
+        for tentativa in range(1, tentativas + 1):
+            try:
+                print(f"[INFO] Tentativa {tentativa} para clicar no elemento...")
+                elemento_para_clicar = wait.until(EC.element_to_be_clickable((By.XPATH, xpath_elemento)))
+                elemento_para_clicar.click()
+                print("[INFO] Clique realizado com sucesso.")
+                sucesso = True
+                break
+            except TimeoutException:
+                print(f"[AVISO] Tentativa {tentativa} falhou. Dando F5 na página para tentar novamente...")
+                driver.refresh()
+                time.sleep(2)
+                wait.until(EC.presence_of_element_located((By.XPATH, xpath_elemento)))  # Espera o elemento existir após o F5
+
+        if not sucesso:
+            print("[ERRO] Não foi possível clicar no campo inicial após múltiplas tentativas com F5.")
+            raise TimeoutException("Elemento não clicável após 10 tentativas com refresh")
+
+        print("[INFO] Fechando menu lateral com clique fora de qualquer item...")
+
+        # Clica no canto superior esquerdo (ex: x=10, y=10)
+        driver.execute_script("document.elementFromPoint(10, 10).click();")
         time.sleep(1)
 
         #FILTRA PELA DATA DE ONTEM
@@ -179,13 +234,27 @@ def main():
         input_data_inicial.clear()
         input_data_inicial.send_keys(ontem)
         input_data_inicial.send_keys(Keys.ENTER)
-        time.sleep(2)
+        time.sleep(4)
 
         input_data_final = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[2]/form/div[2]/div[2]/div/div[1]/div/div[3]/div/div/div/div/div/p/input')))
         input_data_final.clear()
         input_data_final.send_keys(ontem)
         input_data_final.send_keys(Keys.ENTER)
-        time.sleep(2)
+        time.sleep(4)
+
+        print("[INFO] Forçando clique no botão 'Filtrar' após definir os filtros de data...")
+        time.sleep(1)
+        try:
+            botao_filtrar_xpath = '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[2]/form/div[1]/div/div[7]/button[1]'
+            botao_filtrar = WebDriverWait(driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, botao_filtrar_xpath))
+            )
+            botao_filtrar.click()
+            print("[INFO] Clique no botão 'Filtrar' realizado com sucesso.")
+            time.sleep(1)
+        except TimeoutException:
+            print("[ERRO] Botão 'Filtrar' não ficou clicável a tempo.")
+            raise
 
 
         print("[INFO] Selecionando protocolo no dropdown (via JS)...")
