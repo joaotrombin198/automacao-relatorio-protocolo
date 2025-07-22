@@ -10,6 +10,13 @@ while True:
         from selenium.webdriver.chrome.service import Service
         from webdriver_manager.chrome import ChromeDriverManager
         import subprocess
+        from dotenv import load_dotenv
+        import os
+
+        load_dotenv()
+
+        usuario = os.getenv("USUARIO_SGUSUITE")
+        senha = os.getenv("SENHA_SGUSUITE")
 
         options = webdriver.ChromeOptions()
         options.add_argument("--headless=new")
@@ -35,8 +42,9 @@ while True:
         tentativas_login = 3
         for tentativa in range(1, tentativas_login + 1):
             try:
-                wait.until(EC.presence_of_element_located((By.XPATH, xpath_email))).send_keys("joao.trombin@criciuma.unimedsc.com.br")
-                wait.until(EC.presence_of_element_located((By.XPATH, xpath_senha))).send_keys("C@mpinh02134")
+                wait.until(EC.presence_of_element_located((By.XPATH, xpath_email))).send_keys(usuario)
+                wait.until(EC.presence_of_element_located((By.XPATH, xpath_senha))).send_keys(senha)
+
                 time.sleep(1)
                 wait.until(EC.element_to_be_clickable((By.XPATH, xpath_botao_login))).click()
                 break
