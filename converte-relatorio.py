@@ -228,7 +228,7 @@ if arquivo_novo.lower().endswith('.xls'):
 else:
     caminho_para_uso = arquivo_novo
 
-data_ontem = (datetime.now() - timedelta(days=4)).strftime('%Y-%m-%d')
+data_ontem = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
 
 # Colunas que são datas no relatório (1-based)
 colunas_datas = [3, 7]
