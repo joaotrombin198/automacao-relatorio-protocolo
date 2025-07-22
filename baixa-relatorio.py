@@ -23,38 +23,82 @@ while True:
         wait = WebDriverWait(driver, 30)
         actions = ActionChains(driver)
 
-        driver.get("https://sgusuite-hml.sgusuite.com.br/login")
+        driver.get("https://sgusuite-prd.sgusuite.com.br/login")
         time.sleep(2)
 
         # LOGIN
         print("[INFO] Fazendo login...")
-        wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"))).send_keys("joao.trombin@criciuma.unimedsc.com.br")
-        wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"))).send_keys("C@mpinh02134")
-        time.sleep(1)
-        wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"))).click()
+        xpath_email = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"
+        xpath_senha = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"
+        xpath_botao_login = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"
+
+        tentativas_login = 3
+        for tentativa in range(1, tentativas_login + 1):
+            try:
+                wait.until(EC.presence_of_element_located((By.XPATH, xpath_email))).send_keys("joao.trombin@criciuma.unimedsc.com.br")
+                wait.until(EC.presence_of_element_located((By.XPATH, xpath_senha))).send_keys("C@mpinh02134")
+                time.sleep(1)
+                wait.until(EC.element_to_be_clickable((By.XPATH, xpath_botao_login))).click()
+                break
+            except Exception as e:
+                print(f"[AVISO] Erro ao preencher login (tentativa {tentativa}). Dando F5...")
+                driver.refresh()
+                time.sleep(3)
+        else:
+            raise Exception("[ERRO] Não foi possível realizar o login após várias tentativas.")
 
         # PÁGINA PRINCIPAL
         print("[INFO] Entrando no sistema...")
-        wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div[2]/button"))).click()
+        xpath_botao_sistema = "/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/div/div/div/div/div[2]/button"
+        tentativas_sistema = 3
+        for tentativa in range(1, tentativas_sistema + 1):
+            try:
+                wait.until(EC.element_to_be_clickable((By.XPATH, xpath_botao_sistema))).click()
+                break
+            except Exception as e:
+                print(f"[AVISO] Botão de entrada no sistema não disponível (tentativa {tentativa}). Dando F5...")
+                driver.refresh()
+                time.sleep(3)
+        else:
+            raise Exception("[ERRO] Não foi possível acessar o sistema após várias tentativas.")
+
         time.sleep(2)
-        time.sleep(5)
 
         # MENU → RELATÓRIOS GERADOS
-        menu_xpath = '/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[4]/div/div[1]'
-        actions.move_to_element(driver.find_element(By.XPATH, menu_xpath)).perform()
-        time.sleep(1)
-
-        relatorios_xpath = '/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[4]/div/div[2]/div/a[14]/div/div/div/div/div[1]/div'
-        wait.until(EC.element_to_be_clickable((By.XPATH, relatorios_xpath))).click()
-
-        time.sleep(5)
+        menu_xpath = '/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[3]/div/div[1]/a/div'
+        relatorios_xpath = '/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[3]/div/div[2]/div/a[3]/div/div/div/div/div[1]/div'
+        tentativas_menu = 3
+        for tentativa in range(1, tentativas_menu + 1):
+            try:
+                actions.move_to_element(driver.find_element(By.XPATH, menu_xpath)).perform()
+                time.sleep(1)
+                wait.until(EC.element_to_be_clickable((By.XPATH, relatorios_xpath))).click()
+                break
+            except Exception as e:
+                print(f"[AVISO] Erro ao abrir menu de relatórios (tentativa {tentativa}). Dando F5...")
+                driver.refresh()
+                time.sleep(5)
+        else:
+            raise Exception("[ERRO] Não foi possível acessar os relatórios após várias tentativas.")
 
         # ESPERA A TABELA CARREGAR
         tabela_xpath = '//table[contains(@class,"table")]/tbody/tr[1]'
-        wait.until(EC.presence_of_element_located((By.XPATH, tabela_xpath)))
+        tentativas_tabela = 3
+        for tentativa in range(1, tentativas_tabela + 1):
+            try:
+                wait.until(EC.presence_of_element_located((By.XPATH, tabela_xpath)))
+                print("[INFO] Tabela de relatórios carregada com sucesso.")
+                break
+            except Exception:
+                print(f"[AVISO] Tabela não carregou (tentativa {tentativa}). Dando F5...")
+                driver.refresh()
+                time.sleep(5)
+        else:
+            raise Exception("[ERRO] Tabela de relatórios não carregou após várias tentativas.")
 
         # AGUARDANDO RELATÓRIO FICAR "CONCLUÍDO"
         print("[INFO] Aguardando relatório mais recente ficar 'Concluído'...")
+
 
         status_xpath = '//table[contains(@class,"table")]/tbody/tr[1]/td[4]/div'
         tentativas = 0
