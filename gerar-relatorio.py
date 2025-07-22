@@ -150,11 +150,11 @@ def main():
         print("[INFO] Acessando menu de relatórios...")
         menu_principal = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[4]/div/div[1]/a/div")))
         actions.move_to_element(menu_principal).perform()
-        time.sleep(1)
+        time.sleep(2)
 
         subitem_protocolo = wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/div/div/div[1]/aside/div[2]/ul/li[4]/div/div[2]/div/a[1]/div/div/div/div/div[1]/div")))
         subitem_protocolo.click()
-        time.sleep(1)
+        time.sleep(2)
 
         print("[INFO] Esperando tela de protocolos carregar...")
         wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[1]/nav')))
@@ -173,13 +173,13 @@ def main():
         print(f"[INFO] Selecionando filtros de data: {ontem}")
         icone_calendario = wait.until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[2]/form/div[2]/div/div/span[2]')))
         icone_calendario.click()
-        time.sleep(0.3)
+        time.sleep(2)
 
         input_data_inicial = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[2]/form/div[2]/div[2]/div/div[1]/div/div[2]/div/div/div/div/div/p/input')))
         input_data_inicial.clear()
         input_data_inicial.send_keys(ontem)
         input_data_inicial.send_keys(Keys.ENTER)
-        time.sleep(1)
+        time.sleep(2)
 
         input_data_final = wait.until(EC.presence_of_element_located((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div/div[2]/section/div[2]/div[2]/form/div[2]/div[2]/div/div[1]/div/div[3]/div/div/div/div/div/p/input')))
         input_data_final.clear()
