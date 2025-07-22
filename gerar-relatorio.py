@@ -10,12 +10,19 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
+from dotenv import load_dotenv
+import os
 import unicodedata
 import traceback
 import re
 import subprocess
 from datetime import datetime
 import time
+
+load_dotenv()
+usuario = os.getenv("USUARIO_SGUSUITE")
+senha = os.getenv("SENHA_SGUSUITE")
+
 
 def main():
     driver = None
@@ -156,10 +163,18 @@ def main():
 
         # LOGIN
         print("[INFO] Fazendo login...")
-        wait.until(EC.presence_of_element_located((By.XPATH, xpath_email))).send_keys("joao.trombin@criciuma.unimedsc.com.br")
-        wait.until(EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"))).send_keys("C@mpinh02134")
+
+        # XPATHs
+        xpath_email = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[1]/div/div/p/input"
+        xpath_senha = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[2]/div[1]/div/div/p/input"
+        xpath_botao = "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"
+
+        # Entra com os dados do .env
+        wait.until(EC.presence_of_element_located((By.XPATH, xpath_email))).send_keys(usuario)
+        wait.until(EC.presence_of_element_located((By.XPATH, xpath_senha))).send_keys(senha)
         time.sleep(1)
-        wait.until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[1]/div/section/div/div/div/div[3]/div/div/form/div[3]/button"))).click()
+        wait.until(EC.element_to_be_clickable((By.XPATH, xpath_botao))).click()
+
 
         #PÁGINA PRINCIPAL
         print("[INFO] Entrando no sistema...")
