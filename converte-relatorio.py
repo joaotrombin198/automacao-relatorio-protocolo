@@ -6,11 +6,23 @@ from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils.datetime import from_excel
 from copy import copy
 import xlrd
+from pathlib import Path
 
-pasta_destino = r'Q:\Tecnologia da Informacao\Sistemas\Joao_Vitor\teste_protocolos'
+pasta_projeto = str(Path().resolve())
 nome_base = 'Relatorio-Base.xlsx'
-caminho_base = os.path.join(pasta_destino, nome_base)
-downloads_dir = os.path.join(os.path.expanduser('~'), 'Downloads')
+caminho_base = os.path.join(pasta_projeto, nome_base)
+
+# Busca arquivos Excel na pasta do projeto
+arquivos_excel = [
+    f for f in os.listdir(pasta_projeto)
+    if (f.endswith('.xls') or f.endswith('.xlsx')) and not f.startswith("Relatorio-Base")
+]
+if not arquivos_excel:
+    print("[ERRO] Nenhum arquivo Excel (.xls ou .xlsx) encontrado na pasta do projeto.")
+    exit()
+
+arquivos_excel_path = [os.path.join(pasta_projeto, f) for f in arquivos_excel]
+arquivo_novo = max(arquivos_excel_path, key=os.path.getctime)
 
 def encontrar_proxima_linha_vazia(ws, min_row=3):
     for i in range(min_row, ws.max_row + 2):
@@ -207,15 +219,6 @@ def init_xlsx(caminho_arquivo):
     wb.save(caminho_arquivo)
     print(f"[OK] Planilha base inicializada e salva em: {caminho_arquivo}")
 
-# ----------- INICIO DO SCRIPT ------------
-
-arquivos_excel = [f for f in os.listdir(downloads_dir) if f.endswith('.xls') or f.endswith('.xlsx')]
-if not arquivos_excel:
-    print("[ERRO] Nenhum arquivo Excel (.xls ou .xlsx) encontrado na pasta Downloads.")
-    exit()
-
-arquivos_excel_path = [os.path.join(downloads_dir, f) for f in arquivos_excel]
-arquivo_novo = max(arquivos_excel_path, key=os.path.getctime)
 
 # Se o arquivo for .xls, converte para .xlsx antes de seguir
 if arquivo_novo.lower().endswith('.xls'):
@@ -225,7 +228,7 @@ if arquivo_novo.lower().endswith('.xls'):
 else:
     caminho_para_uso = arquivo_novo
 
-data_ontem = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+data_ontem = (datetime.now() - timedelta(days=4)).strftime('%Y-%m-%d')
 
 # Colunas que são datas no relatório (1-based)
 colunas_datas = [3, 7]
@@ -233,89 +236,93 @@ colunas_datas = [3, 7]
 altura_linha_fina = 15
 
 if not os.path.exists(caminho_base):
-    # Cenário 1: base não existe, cria base formatada e copia dados do arquivo convertido
-
+    # Cenário 1: base não existe → cria base formatada e copia dados
     init_xlsx(caminho_base)
-
     wb_base = load_workbook(caminho_base)
     ws_base = wb_base.active
 
     wb_novo = load_workbook(caminho_para_uso)
     ws_novo = wb_novo.active
 
-    # Copia dados a partir da linha 3 para não sobrescrever cabeçalho mesclado
+    # Copia dados para o base
     for i, row in enumerate(ws_novo.iter_rows(min_row=3, values_only=True), start=3):
         for col_idx, valor in enumerate(row, start=1):
-            # Convertendo número de data para datetime se necessário
             if col_idx in colunas_datas and isinstance(valor, (int, float)):
-                try:
-                    valor = from_excel(valor)
-                except:
-                    pass
-            ws_base.cell(row=i, column=col_idx).value = valor
-            # Força formato de data nas colunas
+                try: valor = from_excel(valor)
+                except: pass
+            ws_base.cell(row=i, column=col_idx, value=valor)
             if col_idx in colunas_datas:
                 ws_base.cell(row=i, column=col_idx).number_format = "DD/MM/YYYY"
-        # Força altura fina da linha
         ws_base.row_dimensions[i].height = altura_linha_fina
 
     wb_base.save(caminho_base)
     print(f"[OK] Arquivo base criado com dados do arquivo convertido: {caminho_base}")
 
-else:
-    # Cenário 2: base existe, move novo arquivo e cola dados novos na base
-    nome_arquivo_dia = f"Relatorio-{data_ontem}.xlsx"
-    caminho_destino = os.path.join(pasta_destino, nome_arquivo_dia)
-    shutil.move(caminho_para_uso, caminho_destino)
-    print(f"[OK] Novo relatório movido para: {caminho_destino}")
+    # → Agora gera também o arquivo diário formatado igual à base
+    nome_diario = f"Relatorio-{data_ontem}.xlsx"
+    caminho_diario = os.path.join(pasta_projeto, nome_diario)
+    wb_diario = Workbook()
+    formata_arquivo_novo(wb_diario)
+    ws_diario = wb_diario.active
 
-    wb_base = load_workbook(caminho_base)
-    ws_base = wb_base.active
-
-    wb_novo = load_workbook(caminho_destino)
-
-    # 🔧 Aplica a mesma formatação que usamos na base
-    formata_arquivo_novo(wb_novo)
-    wb_novo.save(caminho_destino)
-
-    ws_novo = wb_novo.active
-
-    def copiar_estilo(origem_celula, destino_celula):
-        destino_celula.font = copy(origem_celula.font)
-        destino_celula.border = copy(origem_celula.border)
-        destino_celula.fill = copy(origem_celula.fill)
-        destino_celula.number_format = origem_celula.number_format
-        destino_celula.protection = copy(origem_celula.protection)
-        destino_celula.alignment = copy(origem_celula.alignment)
-
-       # Linha modelo para copiar estilos (última linha já existente, assumindo que sempre tem dados)
-    linha_modelo = ws_base.max_row
-    linha_destino = encontrar_proxima_linha_vazia(ws_base, min_row=3)
-
-    # Copia dados do novo arquivo a partir da linha 3 (pulando cabeçalho)
-    for i, row in enumerate(ws_novo.iter_rows(min_row=3), start=linha_destino):
-        for col_idx, celula_nova in enumerate(row, start=1):
-            valor = celula_nova.value
-            # Convertendo número de data para datetime se necessário
-            if col_idx in colunas_datas and isinstance(valor, (int, float)):
-                try:
-                    valor = from_excel(valor)
-                except:
-                    pass
-
-            celula_base = ws_base.cell(row=i, column=col_idx)
-            celula_base.value = valor
-
-            # Força formato de data nas colunas
+    # Copia os dados do base para o diário
+    for i, row in enumerate(ws_base.iter_rows(min_row=3, values_only=True), start=3):
+        for col_idx, valor in enumerate(row, start=1):
+            cell = ws_diario.cell(row=i, column=col_idx, value=valor)
             if col_idx in colunas_datas:
-                celula_base.number_format = "DD/MM/YYYY"
+                cell.number_format = "DD/MM/YYYY"
+        ws_diario.row_dimensions[i].height = altura_linha_fina
 
-            celula_modelo = ws_base.cell(row=linha_modelo, column=col_idx)
-            copiar_estilo(celula_modelo, celula_base)
+    wb_diario.save(caminho_diario)
+    print(f"[OK] Arquivo diário criado e formatado: {caminho_diario}")
 
-        # Ajustar altura da linha igual à linha modelo, ou 15 se modelo não definir altura
-        altura_modelo = ws_base.row_dimensions[linha_modelo].height
-        ws_base.row_dimensions[i].height = altura_modelo if altura_modelo else altura_linha_fina
+else:
+    # Cenário 2: base existe → move e formata o diário antes de colar na base
+    nome_diario = f"Relatorio-{data_ontem}.xlsx"
+    caminho_diario = os.path.join(pasta_projeto, nome_diario)
+    shutil.move(caminho_para_uso, caminho_diario)
+    print(f"[OK] Novo relatório movido para: {caminho_diario}")
+
+    # Aplica formatação igual à base
+    wb_diario = load_workbook(caminho_diario)
+    formata_arquivo_novo(wb_diario)
+    wb_diario.save(caminho_diario)
+
+    # Agora cola os dados formatados no base
+    wb_base = load_workbook(caminho_base); ws_base = wb_base.active
+    ws_diario = wb_diario.active
+
+    linha_modelo = ws_base.max_row
+    proxima = encontrar_proxima_linha_vazia(ws_base, min_row=3)
+
+    for i, row in enumerate(ws_diario.iter_rows(min_row=3), start=proxima):
+        for col_idx, cel in enumerate(row, start=1):
+            valor = cel.value
+            if col_idx in colunas_datas and isinstance(valor, (int, float)):
+                try: valor = from_excel(valor)
+                except: pass
+            dest_cell = ws_base.cell(row=i, column=col_idx, value=valor)
+            if col_idx in colunas_datas:
+                dest_cell.number_format = "DD/MM/YYYY"
+            # copia estilo do modelo
+            modelo_cel = ws_base.cell(row=linha_modelo, column=col_idx)
+            dest_cell.font   = copy(modelo_cel.font)
+            dest_cell.fill   = copy(modelo_cel.fill)
+            dest_cell.border = copy(modelo_cel.border)
+            dest_cell.alignment   = copy(modelo_cel.alignment)
+            dest_cell.protection  = copy(modelo_cel.protection)
+        altura_modelo = ws_base.row_dimensions[linha_modelo].height or altura_linha_fina
+        ws_base.row_dimensions[i].height = altura_modelo
 
     wb_base.save(caminho_base)
-    print(f"[OK] Dados do relatório novo colados no arquivo base, mantendo formatação e cabeçalho.")
+    print(f"[OK] Dados do relatório diário colados no base, formatação mantida.")
+
+# --- LIMPEZA FINAL: remove todos os .xls da pasta do projeto ---
+for nome_arquivo in os.listdir(pasta_projeto):
+    if nome_arquivo.lower().endswith('.xls'):
+        caminho_arquivo = os.path.join(pasta_projeto, nome_arquivo)
+        try:
+            os.remove(caminho_arquivo)
+            print(f"[OK] Removido arquivo temporário: {nome_arquivo}")
+        except Exception as e:
+            print(f"[ERRO] Falha ao remover {nome_arquivo}: {e}")
