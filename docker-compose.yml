@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  relatorio:
+    build: .
+    container_name: relatorio-scheduler
+    volumes:
+      - ./relatorios:/app/relatorios  # bind mount
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
