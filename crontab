@@ -1,0 +1,8 @@
+PATH=/usr/local/bin:/usr/bin:/bin
+PYTHONUNBUFFERED=1
+
+# Executa todos os dias às 04:00 
+# 0 4 * * * cd /app && /usr/local/bin/python3 main.py >> /app/logs/cron.log 2>&1
+
+# Para testes, executa a cada minuto
+*/1 * * * * cd /app && /usr/local/bin/python3 main.py >> /app/logs/cron.log 2>&1

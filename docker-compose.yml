@@ -1,11 +1,30 @@
-version: '3.8'
+version: "3.8"
 
 services:
   relatorio:
     build: .
     container_name: relatorio-scheduler
     volumes:
-      - ./relatorios:/app/relatorios  # bind mount
+      - ./relatorios:/app/relatorios
+      - ./logs:/app/logs
     environment:
       - PYTHONUNBUFFERED=1
+      - TZ=America/Sao_Paulo
+    command: >
+      sh -c "
+        echo 'Iniciando serviços...' &&
+        service cron start &&
+        echo 'Cron iniciado com sucesso!' &&
+        touch /app/logs/cron.log &&
+        echo 'Arquivo de log criado. Aguardando execuções do cron...' &&
+        echo 'Logs aparecerão abaixo:' &&
+        echo '=========================' &&
+        tail -f /app/logs/cron.log
+      "
     restart: unless-stopped
+    networks:
+      - relatorio-network
+
+networks:
+  relatorio-network:
+    driver: bridge
